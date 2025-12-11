@@ -1,112 +1,114 @@
-# Device Activity Tracker
-Whatsapp Activity Tracker via RTT Analysis
+# WhatsApp Activity Tracker - Full Stack Analytics
 
 > ⚠️ **DISCLAIMER**: Proof-of-concept for educational and security research purposes only. Demonstrates privacy vulnerabilities in WhatsApp and Signal.
 
 ## Overview
 
-This project implements the research from the paper **"Careless Whisper: Exploiting Silent Delivery Receipts to Monitor Users on Mobile Instant Messengers"** by Gabriel K. Gegenhuber, Maximilian Günther, Markus Maier, Aljosha Judmayer, Florian Holzbauer, Philipp É. Frenzel, and Johanna Ullrich (University of Vienna & SBA Research).
+This project implements the research from the paper **"Careless Whisper: Exploiting Silent Delivery Receipts to Monitor Users on Mobile Instant Messengers"** by Gabriel K. Gegenhuber, et al.
 
 **What it does:** By measuring Round-Trip Time (RTT) of WhatsApp message delivery receipts, this tool can detect:
 - When a user is actively using their device (low RTT)
 - When the device is in standby/idle mode (higher RTT)
-- Potential location changes (mobile data vs. WiFi)
-- Activity patterns over time
+- Activity patterns over time (Sleep/Wake cycles)
 
 **Security implications:** This demonstrates a significant privacy vulnerability in messaging apps that can be exploited for surveillance.
 
-## Example
+## Features
 
-![WhatsApp Activity Tracker Interface](example.png)
+- **Real-time Tracking:** Live RTT gauge and status updates via Socket.IO.
+- **Persistent History:** MongoDB storage for long-term data analysis.
+- **Analytics Dashboard:**
+    - **24h Timeline:** Visual history of Online/Standby states.
+    - **Activity Heatmap:** Hourly intensity charts.
+    - **Sleep Estimation:** Automated detection of longest inactivity periods.
+- **Multi-Device Support:** Track multiple contacts simultaneously.
+- **Modern UI:** React + Vite + TailwindCSS + Recharts.
 
-The web interface shows real-time RTT measurements, device state detection, and activity patterns.
+## Tech Stack
+
+- **Backend:** Node.js, Express, Socket.IO, `@whiskeysockets/baileys`
+- **Database:** MongoDB (Mongoose)
+- **Frontend:** React, Vite, TailwindCSS, Recharts
 
 ## Installation
 
-```bash
-# Clone repository
-git clone https://github.com/gommzystudio/device-activity-tracker.git
-cd whatsapp-activity-tracker
+### Prerequisites
+- Node.js 16+
+- MongoDB (running locally or via Atlas URI)
+- WhatsApp Account (for the tracking session)
 
-# Install dependencies
-npm install
-cd client && npm install && cd ..
-```
+### Setup
 
-**Requirements:** Node.js 16+, npm, WhatsApp account
+1. **Clone repository**
+   ```bash
+   git clone https://github.com/gommzystudio/device-activity-tracker.git
+   cd device-activity-tracker
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   cd client && npm install && cd ..
+   ```
+
+3. **Database Configuration**
+   By default, the app connects to `mongodb://localhost:27017/whatsapp-tracker`.
+   To use a different URI, set the `MONGODB_URI` environment variable.
 
 ## Usage
 
-### Web Interface (Recommended)
+### Web Dashboard (Recommended)
 
-```bash
-# Terminal 1: Start backend
-npm run start:server
+1. **Start the Backend Server**
+   ```bash
+   npm run start:server
+   ```
+   *The server runs on port 3001.*
 
-# Terminal 2: Start frontend
-npm run start:client
-```
+2. **Start the Frontend Client**
+   ```bash
+   npm run start:client
+   ```
+   *The client runs on http://localhost:5173.*
 
-Open `http://localhost:3000`, scan QR code with WhatsApp, then enter phone number to track (e.g., `491701234567`).
+3. **Authenticate**
+   - Open the client URL.
+   - Scan the QR code with your WhatsApp (Linked Devices).
+
+4. **Start Tracking**
+   - Enter a target phone number (with country code, e.g., `491701234567`) in the sidebar.
+   - View real-time metrics and historical analytics.
 
 ### CLI Interface
 
 ```bash
 npm start
 ```
-
-Follow prompts to authenticate and enter target number.
-
-## How It Works
-
-The tracker sends reaction messages to non-existent message IDs, which triggers no notifications at the target. The time between sending the probe message and receiving the CLIENT ACK (Status 3) is measured as RTT. Device state is detected using a dynamic threshold calculated as 90% of the median RTT: values below the threshold indicate active usage, values above indicate standby mode. Measurements are stored in a history and the median is continuously updated to adapt to different network conditions.
-
-## Known Issues
-
-1. **Offline Detection Bug**: The offline detection is currently not working reliably
-
-If you have time and interest, feel free to submit a pull request to fix these issues.
+Follow prompts to authenticate and enter target number. Note: CLI does not support the visual dashboard or persistent history features.
 
 ## Project Structure
 
 ```
 device-activity-tracker/
 ├── src/
-│   ├── tracker.ts      # Core RTT analysis logic
-│   ├── server.ts       # Backend API server
-│   └── index.ts        # CLI interface
-├── client/             # React web interface
+│   ├── database.ts     # MongoDB connection & Schema
+│   ├── tracker.ts      # Core RTT analysis & DB saving
+│   ├── server.ts       # Express API & Socket.IO
+│   └── index.ts        # CLI entry point
+├── client/             # Vite + React Frontend
+│   ├── src/
+│   │   ├── components/ # Dashboard Widgets (Gauge, Graph, etc.)
+│   │   └── App.tsx     # Main Layout
 └── package.json
 ```
 
-## How to Protect Yourself
-
-The most effective protection is to enable "My Contacts" in WhatsApp under Settings → Privacy → Advanced. This prevents unknown numbers from sending you messages (including silent reactions). Disabling read receipts helps with regular messages but does not protect against this specific attack. As of December 2025, this vulnerability remains exploitable in WhatsApp and Signal.
-
 ## Ethical & Legal Considerations
 
-⚠️ For research and educational purposes only. Never track people without explicit consent - this may violate privacy laws. Authentication data (`auth_info_baileys/`) is stored locally and must never be committed to version control.
-
-## Citation
-
-Based on research by Gegenhuber et al., University of Vienna & SBA Research:
-
-```bibtex
-@inproceedings{gegenhuber2024careless,
-  title={Careless Whisper: Exploiting Silent Delivery Receipts to Monitor Users on Mobile Instant Messengers},
-  author={Gegenhuber, Gabriel K. and G{\"u}nther, Maximilian and Maier, Markus and Judmayer, Aljosha and Holzbauer, Florian and Frenzel, Philipp {\'E}. and Ullrich, Johanna},
-  year={2024},
-  organization={University of Vienna, SBA Research}
-}
-```
+⚠️ **For research and educational purposes only.**
+Never track people without explicit consent - this may violate privacy laws (e.g., GDPR, stalking laws). Authentication data is stored locally (`auth_info_baileys/`) and must never be shared.
 
 ## License
 
 MIT License - See LICENSE file.
 
 Built with [@whiskeysockets/baileys](https://github.com/WhiskeySockets/Baileys)
-
----
-
-**Use responsibly. This tool demonstrates real security vulnerabilities that affect millions of users.**
-
