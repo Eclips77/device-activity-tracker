@@ -1,6 +1,7 @@
 import '@whiskeysockets/baileys';
 import { WASocket, proto } from '@whiskeysockets/baileys';
 import { pino } from 'pino';
+import { Metric } from './database';
 
 const logger = pino({ level: 'debug' });
 
@@ -258,7 +259,20 @@ export class WhatsAppTracker {
         metrics.lastUpdate = Date.now();
 
         this.determineDeviceState(jid);
+        this.saveMetric(jid, rtt, metrics.state); // Save to DB
         this.sendUpdate();
+    }
+
+    private async saveMetric(jid: string, rtt: number, state: string) {
+        try {
+            await Metric.create({
+                jid,
+                rtt,
+                state: state === 'An (Online)' ? 'Online' : (state === 'Standby' ? 'Standby' : 'Offline')
+            });
+        } catch (error) {
+            console.error(`[DB ERROR] Failed to save metric for ${jid}:`, error);
+        }
     }
 
     /**
